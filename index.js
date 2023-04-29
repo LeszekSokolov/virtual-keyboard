@@ -388,6 +388,51 @@
       },
     },
 
-   
+    createElement({ tag, tagClass, tagText }) {
+      const elements = document.createElement(tag);
+      elements.className = tagClass;
+      elements.innerHTML = tagText;
+      return elements;
+    },
+
+    createKeyArea(arrKey, arrFuncKeys) {
+      const keyBox = this.createElement({ tag: 'div', tagClass: 'keyboard', tagText: '' });
+
+      for (let i = 0; i < arrKey.length; i += 1) {
+        const keysRow = this.createElement({ tag: 'div', tagClass: 'keys-row', tagText: '' });
+
+        for (let j = 0; j < arrKey[i].length; j += 1) {
+          const key = arrKey[i][j];
+          let classesStr = `key ${key}`.toLowerCase();
+
+          if (arrFuncKeys.includes(key)) classesStr = `${classesStr} key--function`;
+
+          const keyElm = this.createElement({ tag: 'button', tagClass: classesStr, tagText: '' });
+          keyElm.setAttribute('data-key-code', key);
+          keysRow.append(keyElm);
+        }
+        keyBox.append(keysRow);
+      }
+      return keyBox;
+    },
+
+    setShiftUpLayout() {
+      this.setLayout({ query: '.key', language: this.inputField.languageToggle, shift: 'lowerCase' });
+    },
+
+    setShiftDownLayout() {
+      this.setLayout({ query: '.key:not(.key--function)', language: this.inputField.languageToggle, shift: 'shift' });
+    },
+
+    setLayout({ query, language, shift }) {
+      const arrKey = this.elements.keyBox.querySelectorAll(query);
+      for (let i = 0; i < arrKey.length; i += 1) {
+        const elem = arrKey[i];
+        const keySymbol = this.language[language][shift][elem.dataset.keyCode];
+        elem.innerHTML = keySymbol;
+      }
+    },
+
+
   });
 })();
