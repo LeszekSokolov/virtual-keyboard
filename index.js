@@ -433,6 +433,143 @@
       }
     },
 
+    setLangLayout(languageToggle) {
+      this.setLayout({ query: '.key', language: languageToggle, shift: 'lowerCase' });
+      this.inputField.languageToggle = languageToggle;
+      localStorage.setItem('virtualKeyboardLang', languageToggle);
+    },
+
+    setCapsLock() {
+      const arrKey = this.elements.keyBox.querySelectorAll('.key:not(.key--function)');
+
+      for (let i = 0; i < arrKey.length; i += 1) {
+        const element = arrKey[i];
+        const keySymbol = element.innerHTML.toUpperCase();
+        element.innerHTML = keySymbol;
+      }
+    },
+
+    switchLangLayout() {
+      if (this.inputField.languageToggle === LANGUAGE.en) {
+        this.inputField.languageToggle = LANGUAGE.ru;
+      } else if (this.inputField.languageToggle === LANGUAGE.ru) {
+        this.inputField.languageToggle = LANGUAGE.en;
+      }
+      this.setLangLayout(this.inputField.languageToggle);
+    },
+
+    typeChar(char) {
+      const text = this.elements.textAria.value;
+      const start = this.elements.textAria.selectionStart;
+      const end = this.elements.textAria.selectionEnd;
+
+      this.elements.textAria.value = `${text.substring(0, start)}${char}${text.substring(end)}`;
+      this.elements.textAria.selectionStart = start + 1;
+      this.elements.textAria.selectionEnd = start + 1;
+    },
+
+    typeBackspace() {
+      const text = this.elements.textAria.value;
+      const start = this.elements.textAria.selectionStart;
+      const end = this.elements.textAria.selectionEnd;
+
+      if (start === end) {
+        this.elements.textAria.value = text.substring(0, start - 1) + text.substring(end);
+        this.elements.textAria.selectionStart = start - 1;
+        this.elements.textAria.selectionEnd = start - 1;
+      } else {
+        this.elements.textAria.value = text.substring(0, start) + text.substring(end);
+        this.elements.textAria.selectionStart = start;
+        this.elements.textAria.selectionEnd = start;
+      }
+      this.elements.textAria.focus();
+    },
+
+    typeDelete() {
+      const text = this.elements.textAria.value;
+      const start = this.elements.textAria.selectionStart;
+      const end = this.elements.textAria.selectionEnd;
+
+      if (start === end) {
+        this.elements.textAria.value = text.substring(0, start) + text.substring(end + 1);
+        this.elements.textAria.selectionStart = start;
+        this.elements.textAria.selectionEnd = start;
+      } else {
+        this.elements.textAria.value = text.substring(0, start) + text.substring(end);
+        this.elements.textAria.selectionStart = start;
+        this.elements.textAria.selectionEnd = start;
+      }
+      this.elements.textAria.focus();
+    },
+    toggleCapsLock() {
+      const element = this.elements.keyBox.querySelector('button[data-key-code="CapsLock"]');
+      if (!this.inputField.capsLockToggle) {
+        element.classList.add('turn-on');
+        this.setCapsLock();
+        this.inputField.capsLockToggle = true;
+      } else {
+        element.classList.remove('turn-on');
+        this.setShiftUpLayout();
+        this.inputField.capsLockToggle = false;
+      }
+    },
+
+    handleFunctionKeys(keyCode) {
+      switch (keyCode) {
+        case KEYCODE.Backspace:
+          this.typeBackspace();
+          break;
+        case KEYCODE.Delete:
+          this.typeDelete();
+          break;
+        case KEYCODE.Enter:
+          this.typeChar('\n');
+          break;
+        case KEYCODE.Tab:
+          this.typeChar('\t');
+          break;
+        case KEYCODE.ShiftLeft:
+          this.setShiftDownLayout();
+          break;
+        case KEYCODE.ShiftRight:
+          this.setShiftDownLayout();
+          break;
+        case KEYCODE.CapsLock:
+          this.toggleCapsLock();
+          break;
+        default:
+      }
+    },
+
+    handleEvent(event) {
+      const element = this.elements.keyBox.querySelector(`button[data-key-code=${event.code}]`);
+      if (!element) return;
+
+      switch (event.type) {
+        case 'keydown':
+          element.classList.add('active');
+          if (!(this.elements.functionKeys.includes(element.dataset.keyCode))) {
+            const char = element.textContent;
+            this.typeChar(char);
+          }
+          if (this.elements.functionKeys.includes(element.dataset.keyCode)) {
+            this.handleFunctionKeys(element.dataset.keyCode);
+          }
+          if ((event.ctrlKey && event.altKey)) {
+            this.switchLangLayout();
+          }
+          event.preventDefault();
+          break;
+
+        case 'keyup':
+          element.classList.remove('active');
+          if (element.dataset.keyCode === 'ShiftLeft' || element.dataset.keyCode === 'ShiftRight') {
+            this.setShiftUpLayout();
+          }
+          break;
+        default:
+      }
+    },
 
   });
 })();
